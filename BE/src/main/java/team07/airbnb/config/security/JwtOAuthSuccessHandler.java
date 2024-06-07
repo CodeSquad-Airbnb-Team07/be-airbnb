@@ -32,21 +32,40 @@ public class JwtOAuthSuccessHandler implements AuthenticationSuccessHandler {
     private final ObjectMapper mapper;
 
     @Override
-    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-        JwtUserDetails userDetails = (JwtUserDetails) authentication.getPrincipal();
-        UserEntity user = userDetails.getUser();
+    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws ServletException, IOException {
+        SavedRequest savedRequest = requestCache.getRequest(request, response);
 
         response.setContentType("application/json; charset=utf-8");
         response.setCharacterEncoding("UTF-8");
 
         Map<String, String> responseMap = new HashMap<>();
 
-        responseMap.put("token", userDetails.getPassword());
-        responseMap.put("userId", user.getId().toString());
-        responseMap.put("userName", user.getName());
+            try {
+                URI targetUri = new URI(targetUrl);
+                String path = targetUri.getPath();
 
-        PrintWriter writer = response.getWriter();
-        writer.print(mapper.writeValueAsString(responseMap));
-        writer.flush();
+                redirectURL.append("requestPath=").append(getEncodingString(path));
+
+                String query = targetUri.getQuery();
+                if (query != null) {
+                    redirectURL.append("&requestQuery=").append(getEncodingString(query));
+                }
+            } catch (URISyntaxException e) {
+                super.onAuthenticationSuccess(request, response, authentication);
+            }
+        }
+
+        getRedirectStrategy().sendRedirect(request, response, redirectURL.toString());
     }
+
+    private String getEncodingString(String target) {
+        StringBuilder result = new StringBuilder();
+
+        byte[] encode = Base64.getUrlEncoder().encode(target.getBytes());
+        for (byte b : encode) {
+            result.append(b).append(".");
+        }
+        return result.toString();
+    }
+
 }
