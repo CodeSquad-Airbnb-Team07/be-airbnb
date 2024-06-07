@@ -41,32 +41,12 @@ public class JwtOAuthSuccessHandler implements AuthenticationSuccessHandler {
 
         Map<String, String> responseMap = new HashMap<>();
 
-            try {
-                URI targetUri = new URI(targetUrl);
-                String path = targetUri.getPath();
+        responseMap.put("token", userDetails.getPassword());
+        responseMap.put("userId", user.getId().toString());
+        responseMap.put("userName", user.getName());
 
-                redirectURL.append("requestPath=").append(getEncodingString(path));
-
-                String query = targetUri.getQuery();
-                if (query != null) {
-                    redirectURL.append("&requestQuery=").append(getEncodingString(query));
-                }
-            } catch (URISyntaxException e) {
-                super.onAuthenticationSuccess(request, response, authentication);
-            }
-        }
-
-        getRedirectStrategy().sendRedirect(request, response, redirectURL.toString());
+        PrintWriter writer = response.getWriter();
+        writer.print(mapper.writeValueAsString(responseMap));
+        writer.flush();
     }
-
-    private String getEncodingString(String target) {
-        StringBuilder result = new StringBuilder();
-
-        byte[] encode = Base64.getUrlEncoder().encode(target.getBytes());
-        for (byte b : encode) {
-            result.append(b).append(".");
-        }
-        return result.toString();
-    }
-
 }
