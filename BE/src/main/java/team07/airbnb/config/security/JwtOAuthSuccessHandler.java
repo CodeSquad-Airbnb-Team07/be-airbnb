@@ -32,8 +32,9 @@ public class JwtOAuthSuccessHandler implements AuthenticationSuccessHandler {
     private final ObjectMapper mapper;
 
     @Override
-    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws ServletException, IOException {
-        SavedRequest savedRequest = requestCache.getRequest(request, response);
+    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+        JwtUserDetails userDetails = (JwtUserDetails) authentication.getPrincipal();
+        UserEntity user = userDetails.getUser();
 
         response.setContentType("application/json; charset=utf-8");
         response.setCharacterEncoding("UTF-8");
